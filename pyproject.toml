@@ -1,0 +1,31 @@
+[project]
+name = "m1-projet-supply"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "marimo>=0.23.1",
+    "networkx>=3.6.1",
+    "pandas>=3.0.2",
+    "plotly>=6.3.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.3",
+    "ruff>=0.15.11",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
