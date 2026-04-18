@@ -11,3 +11,6 @@ wheels/
 
 #vscode settings
 .vscode/
+
+#marimo 
+__marimo__/
