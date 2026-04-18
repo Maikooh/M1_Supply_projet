@@ -62,7 +62,7 @@ def _(dataclass):
         cout_changement: int = 160
         cout_ecart: int = 200
         limite_heures_sup: float = 0.25
-        effectif_max: int = 12
+        effectif_max: int = 10
         effectif_initial: int = 3
         effectif_final: int = 3
 
@@ -218,9 +218,21 @@ def _(
     niveaux_effectif,
     nx,
 ):
-    G = nx.DiGraph()
-    ajouter_noeuds(G, mois, niveaux_effectif, cfg, calculer_cout_ecart)
-    ajouter_arcs(G, mois, niveaux_effectif, cfg)
+    G_complet = nx.DiGraph()
+    ajouter_noeuds(G_complet, mois, niveaux_effectif, cfg, calculer_cout_ecart)
+    ajouter_arcs(G_complet, mois, niveaux_effectif, cfg)
+
+    source = (0, cfg.effectif_initial)
+    cible = (len(mois) - 1, cfg.effectif_final)
+
+    try:
+        ancetres_cible = nx.ancestors(G_complet, cible) | {cible}
+        descendants_source = nx.descendants(G_complet, source) | {source}
+
+        noeuds_utiles = ancetres_cible.intersection(descendants_source)
+        G = G_complet.subgraph(noeuds_utiles).copy()
+    except Exception:
+        G = G_complet
     return (G,)
 
 
