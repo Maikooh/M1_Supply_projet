@@ -18,7 +18,6 @@ class GrapheDeploiement:
     def __init__(self, probleme: ProblemeDeploiement) -> None:
         self.probleme = probleme
         self.G = nx.DiGraph()
-
         self._ajouter_noeuds()
         self._ajouter_arcs()
 
@@ -26,14 +25,10 @@ class GrapheDeploiement:
         """Ajoute les noeuds valides au graphe."""
         for indice_mois, nom_mois in enumerate(self.probleme.mois):
             for effectif in range(self.probleme.effectif_max + 1):
-                # respecte les effectifs imposés en début et fin de période
                 if not est_effectif_valide(indice_mois, effectif, self.probleme):
                     continue
-
-                # dépasse pas le seuil d'heures sup
                 if not ecart_est_valide(nom_mois, effectif, self.probleme):
                     continue
-
                 cout, surnumeraires, manquants = calculer_cout_ecart(
                     nom_mois, effectif, self.probleme
                 )
@@ -46,32 +41,30 @@ class GrapheDeploiement:
                     manquants=manquants,
                 )
 
+    def _ajouter_arcs(self) -> None:
+        """Ajoute les arcs valides entre noeuds consécutifs."""
+        for indice_mois in range(len(self.probleme.mois) - 1):
+            for effectif_actuel in range(self.probleme.effectif_max + 1):
+                source = (indice_mois, effectif_actuel)
+                if source not in self.G:
+                    continue
+                self._ajouter_arcs_depuis(source)
 
-def _ajouter_arcs(self) -> None:
-    """Ajoute les arcs valides entre noeuds consécutifs."""
-    for indice_mois in range(len(self.probleme.mois) - 1):
-        for effectif_actuel in range(self.probleme.effectif_max + 1):
-            source = (indice_mois, effectif_actuel)
-            if source not in self.G:
+    def _ajouter_arcs_depuis(self, source: tuple[int, int]) -> None:
+        """Ajoute tous les arcs valides depuis un noeud source donné."""
+        indice_mois, effectif_actuel = source
+
+        for effectif_suivant in range(self.probleme.effectif_max + 1):
+            destination = (indice_mois + 1, effectif_suivant)
+
+            if destination not in self.G:
                 continue
-            self._ajouter_arcs_depuis(source)
+            if not echange_autorise(effectif_actuel, effectif_suivant, self.probleme):
+                continue
 
-
-def _ajouter_arcs_depuis(self, source: tuple[int, int]) -> None:
-    """Ajoute tous les arcs valides depuis un noeud source donné."""
-    indice_mois, effectif_actuel = source
-
-    for effectif_suivant in range(self.probleme.effectif_max + 1):
-        destination = (indice_mois + 1, effectif_suivant)
-
-        if destination not in self.G:
-            continue
-        if not echange_autorise(effectif_actuel, effectif_suivant, self.probleme):
-            continue
-
-        echanges = abs(effectif_suivant - effectif_actuel)
-        poids = (
-            self.probleme.cout_changement * echanges
-            + self.G.nodes[destination]["cout_ecart"]
-        )
-        self.G.add_edge(source, destination, poids=poids, echanges=echanges)
+            echanges = abs(effectif_suivant - effectif_actuel)
+            poids = (
+                self.probleme.cout_changement * echanges
+                + self.G.nodes[destination]["cout_ecart"]
+            )
+            self.G.add_edge(source, destination, poids=poids, echanges=echanges)
