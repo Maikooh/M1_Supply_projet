@@ -20,8 +20,8 @@ class ProblemeDeploiement(BaseModel):
     Exemple d'utilisation::
 
         probleme = ProblemeDeploiement(
-            mois=["Janvier", "Fevrier", "Mars"],
-            besoins={"Mars": 4},
+            mois=["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre"],
+            besoins={"Mars": 4, "Avril": 6, "Mai": 7, "Juin": 4, "Juillet": 6, "Aout": 2},
             effectif_initial=3,
             effectif_final=3,
             effectif_max=10,
@@ -29,6 +29,7 @@ class ProblemeDeploiement(BaseModel):
             cout_ecart=200,
             limite_heures_sup=0.25,
             echanges_max_absolu=3,
+            fraction_echanges_max=0.3,
         )
     """
 

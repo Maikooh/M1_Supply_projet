@@ -40,7 +40,8 @@ def echange_autorise(
     effectif_actuel: int, effectif_suivant: int, probleme: ProblemeDeploiement
 ) -> bool:
     echanges = abs(effectif_suivant - effectif_actuel)
-    echanges_max = min(probleme.echanges_max_absolu, effectif_actuel // 3)
+    echanges_max_fraction = int(probleme.fraction_echanges_max * effectif_actuel)
+    echanges_max = min(probleme.echanges_max_absolu, echanges_max_fraction)
     return echanges <= echanges_max
 
 
