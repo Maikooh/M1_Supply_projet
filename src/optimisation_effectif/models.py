@@ -38,19 +38,20 @@ class ProblemeDeploiement(BaseModel):
 
     effectif_initial: NonNegativeInt
     effectif_final: NonNegativeInt
-    effectif_max: NonNegativeInt | None
+    effectif_max: NonNegativeInt | None = None
 
     cout_changement: NonNegativeFloat
     cout_ecart: NonNegativeFloat
 
     limite_heures_sup: Annotated[NonNegativeFloat, Field(lt=1.0)]
     echanges_max_absolu: NonNegativeInt
+    fraction_echanges_max: float | None = None
 
     @model_validator(mode="after")
     def verifier_coherence(self):
         if self.effectif_max is None:
             self.effectif_max = max(
-                self.effectif_initial, self.effectif_final, self.besoins.values()
+                self.effectif_initial, self.effectif_final, max(self.besoins.values())
             )
 
         for mois in self.besoins:
@@ -66,6 +67,7 @@ class ProblemeDeploiement(BaseModel):
                 raise ValueError(
                     "L'effectif final ne peut pas être supérieur à l'effectif maximum"
                 )
+
         return self
 
 

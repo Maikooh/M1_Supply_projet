@@ -13,14 +13,25 @@ def _trouver_chemin(
     noeud_arrivee = (len(probleme.mois) - 1, probleme.effectif_final)
 
     if noeud_depart not in graph or noeud_arrivee not in graph:
-        msg = (
+        raise ValueError(
             f"Le noeud de départ {noeud_depart} ou d'arrivée "
             f"{noeud_arrivee} est manquant dans le graphe."
         )
-        raise ValueError(msg)
 
-    chemin = nx.bellman_ford_path(graph, noeud_depart, noeud_arrivee, weight="poids")
-    cout_total = nx.path_weight(graph, chemin, weight="poids")
+    try:
+        chemin = nx.bellman_ford_path(
+            graph, noeud_depart, noeud_arrivee, weight="poids"
+        )
+        cout_total = nx.path_weight(graph, chemin, weight="poids")
+    except nx.NetworkXNoPath:
+        raise ValueError(
+            f"Aucune solution trouvée avec les paramètres fournis.\n"
+            f"Effectif initial : {probleme.effectif_initial}\n"
+            f"Effectif final   : {probleme.effectif_final}\n"
+            f"Echanges max     : {probleme.echanges_max_absolu} ou "
+            f"{probleme.fraction_echanges_max:.0%} de l'effectif\n"
+            f"Essayez d'ajuster vos paramètres pour trouver une solution réalisable."
+        ) from None
 
     return chemin, cout_total
 
