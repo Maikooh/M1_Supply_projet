@@ -20,8 +20,8 @@ class ProblemeDeploiement(BaseModel):
     Exemple d'utilisation::
 
         probleme = ProblemeDeploiement(
-            mois=["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre"],
-            besoins={"Mars": 4, "Avril": 6, "Mai": 7, "Juin": 4, "Juillet": 6, "Aout": 2},
+            mois=["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin"],
+            besoins={"Mars": 4, "Avril": 6, "Mai": 7, "Juin": 4, "Juillet": 6},
             effectif_initial=3,
             effectif_final=3,
             effectif_max=10,
@@ -38,7 +38,7 @@ class ProblemeDeploiement(BaseModel):
 
     effectif_initial: NonNegativeInt
     effectif_final: NonNegativeInt
-    effectif_max: NonNegativeInt
+    effectif_max: NonNegativeInt | None
 
     cout_changement: NonNegativeFloat
     cout_ecart: NonNegativeFloat
@@ -48,18 +48,24 @@ class ProblemeDeploiement(BaseModel):
 
     @model_validator(mode="after")
     def verifier_coherence(self):
+        if self.effectif_max is None:
+            self.effectif_max = max(
+                self.effectif_initial, self.effectif_final, self.besoins.values()
+            )
+
         for mois in self.besoins:
             if mois not in self.mois:
                 raise ValueError(f"'{mois}' dans besoins est absent de la liste mois")
 
-        if self.effectif_initial > self.effectif_max:
-            raise ValueError(
-                "L'effectif initial ne peut pas être supérieur à l'effectif maximum"
-            )
-        if self.effectif_final > self.effectif_max:
-            raise ValueError(
-                "L'effectif final ne peut pas être supérieur à l'effectif maximum"
-            )
+        if self.effectif_max is not None:
+            if self.effectif_initial > self.effectif_max:
+                raise ValueError(
+                    "L'effectif initial ne peut pas être supérieur à l'effectif maximum"
+                )
+            if self.effectif_final > self.effectif_max:
+                raise ValueError(
+                    "L'effectif final ne peut pas être supérieur à l'effectif maximum"
+                )
         return self
 
 
