@@ -1,13 +1,20 @@
 """Description.
 Ce fichier encode les données utilisées."""
 
-from dataclasses import dataclass
 from typing import Annotated
 
-from pydantic import BaseModel, Field, NonNegativeFloat, NonNegativeInt, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    NonNegativeFloat,
+    NonNegativeInt,
+    model_validator,
+)
 
 
 class ProblemeDeploiement(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
     """Modèle de données pour le problème de déploiement.
 
     Exemple d'utilisation::
@@ -80,8 +87,7 @@ class EtapeDeploiement(BaseModel):
         return self
 
 
-@dataclass
-class SolutionDeploiement:
+class SolutionDeploiement(BaseModel):
     chemin: list[tuple[int, int]]
     cout_total: NonNegativeFloat
     lignes: list[EtapeDeploiement]
