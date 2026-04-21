@@ -46,7 +46,8 @@ def test_est_effectif_valide_initial_incorrect(probleme_test):
 
 def test_est_effectif_valide_final_incorrect(probleme_test):
     """Vérifie que l'effectif du dernier mois doit correspondre à l'effectif final."""
-    assert est_effectif_valide(1, 15, probleme_test) is False
+    dernier_mois_idx = len(probleme_test.mois) - 1
+    assert est_effectif_valide(dernier_mois_idx, 15, probleme_test) is False
 
 def test_calcul_cout_parfait(probleme_test):
     """Vérifie que le coût est 0 quand l'effectif correspond exactement au besoin."""
