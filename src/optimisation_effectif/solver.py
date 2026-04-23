@@ -70,6 +70,7 @@ def _construire_plan(
                 manquants=donnees_noeud["manquants"],
                 cout_ecart=donnees_noeud["cout_ecart"],
                 cout_cumule=cumul,
+                limite_heures_sup=probleme.limite_heures_sup
             )
         )
 
@@ -91,3 +92,24 @@ def resoudre(probleme: ProblemeDeploiement) -> SolutionDeploiement:
         cout_total=cout_total,
         lignes=etapes,
     )
+
+if __name__ == "__main__":
+    # 1. Créer un problème de test
+    test_prob = ProblemeDeploiement(
+        mois=["Janvier", "Fevrier"],
+        besoins={"Janvier": 5, "Fevrier": 8},
+        effectif_initial=5,
+        effectif_final=5,
+        cout_changement=100.0,
+        cout_ecart=200.0,
+        echanges_max_absolu=3
+    )
+    
+    # 2. Tenter de résoudre
+    try:
+        sol = resoudre(test_prob)
+        print(f"Succès ! Coût total : {sol.cout_total}")
+        for ligne in sol.lignes:
+            print(f"Mois: {ligne.mois}, Effectif: {ligne.effectif}")
+    except Exception as e:
+        print(f"Erreur lors de la résolution : {e}")

@@ -22,7 +22,7 @@ probleme = ProblemeDeploiement(
         "Juillet": 6,
         "Aout": 2,
     },
-    effectif_initial=30,
+    effectif_initial=3,
     effectif_final=3,
     cout_changement=160,
     cout_ecart=200,
