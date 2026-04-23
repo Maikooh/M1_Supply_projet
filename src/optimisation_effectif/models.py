@@ -43,7 +43,7 @@ class ProblemeDeploiement(BaseModel):
     cout_changement: NonNegativeFloat
     cout_ecart: NonNegativeFloat
 
-    limite_heures_sup: Annotated[NonNegativeFloat, Field(lt=1.0)]
+    limite_heures_sup: Annotated[NonNegativeFloat, Field(lt=1.0)] | None = None
     echanges_max_absolu: NonNegativeInt
     fraction_echanges_max: float | None = None
 
@@ -81,6 +81,7 @@ class EtapeDeploiement(BaseModel):
     manquants: NonNegativeInt
     cout_ecart: NonNegativeFloat
     cout_cumule: NonNegativeFloat
+    limite_heures_sup: Annotated[NonNegativeFloat, Field(lt=1.0)] | None = None
 
     @model_validator(mode="after")
     def verifier_ecart(self):
@@ -94,6 +95,14 @@ class EtapeDeploiement(BaseModel):
         ):
             raise ValueError(f"Mois '{self.mois}' : écart non nul sans besoin défini")
         return self
+    
+    @property
+    def manquants_apres_heures_sup(self) -> int:
+        """Nombre de personnes manquantes après application des heures supplémentaires."""
+        if self.limite_heures_sup is None or self.manquants == 0:
+            return self.manquants
+        capacite_avec_heures_sup = self.effectif * self.limite_heures_sup
+        return max(0, self.manquants - int(capacite_avec_heures_sup))
 
 
 class SolutionDeploiement(BaseModel):
