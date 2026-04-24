@@ -36,8 +36,8 @@ class ProblemeDeploiement(BaseModel):
     mois: list[str]
     besoins: dict[str, NonNegativeInt]
 
-    effectif_initial: NonNegativeInt
-    effectif_final: NonNegativeInt
+    effectif_initial: NonNegativeInt | None = None
+    effectif_final: NonNegativeInt | None = None
     effectif_max: NonNegativeInt | None = None
 
     cout_changement: NonNegativeFloat
@@ -49,24 +49,34 @@ class ProblemeDeploiement(BaseModel):
 
     @model_validator(mode="after")
     def verifier_coherence(self):
-        if self.effectif_max is None:
-            self.effectif_max = max(
-                self.effectif_initial, self.effectif_final, max(self.besoins.values())
-            )
-
         for mois in self.besoins:
             if mois not in self.mois:
                 raise ValueError(f"'{mois}' dans besoins est absent de la liste mois")
 
-        if self.effectif_max is not None:
-            if self.effectif_initial > self.effectif_max:
+        if self.effectif_max is None:
+            candidats = list(self.besoins.values())
+            if self.effectif_initial is not None:
+                candidats.append(self.effectif_initial)
+            if self.effectif_final is not None:
+                candidats.append(self.effectif_final)
+            if not candidats:
                 raise ValueError(
-                    "L'effectif initial ne peut pas être supérieur à l'effectif maximum"
+                    "effectif_max doit être spécifié si besoins, "
+                    "effectif_initial et effectif_final sont tous absents."
                 )
-            if self.effectif_final > self.effectif_max:
-                raise ValueError(
-                    "L'effectif final ne peut pas être supérieur à l'effectif maximum"
-                )
+            self.effectif_max = max(candidats)
+
+        if (
+            self.effectif_initial is not None
+            and self.effectif_initial > self.effectif_max
+        ):
+            raise ValueError(
+                "L'effectif initial ne peut pas être supérieur à l'effectif maximum"
+            )
+        if self.effectif_final is not None and self.effectif_final > self.effectif_max:
+            raise ValueError(
+                "L'effectif final ne peut pas être supérieur à l'effectif maximum"
+            )
 
         return self
 

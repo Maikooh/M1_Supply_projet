@@ -48,8 +48,8 @@ def echange_autorise(
 def est_effectif_valide(
     indice_mois: int, effectif: int, probleme: ProblemeDeploiement
 ) -> bool:
-    if indice_mois == 0:
+    if indice_mois == 0 and probleme.effectif_initial is not None:
         return effectif == probleme.effectif_initial
-    if indice_mois == len(probleme.mois) - 1:
+    if indice_mois == len(probleme.mois) - 1 and probleme.effectif_final is not None:
         return effectif == probleme.effectif_final
     return True

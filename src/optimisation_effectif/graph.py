@@ -11,6 +11,10 @@ from .costs import (
 )
 from .models import ProblemeDeploiement
 
+# Identifiants des noeuds utilisés quand effectif_initial/final est libre
+NOEUD_SOURCE = "__source__"
+NOEUD_PUITS = "__puits__"
+
 
 class GrapheDeploiement:
     """Construit le DAG du problème de déploiement."""
@@ -20,6 +24,7 @@ class GrapheDeploiement:
         self.G = nx.DiGraph()
         self._ajouter_noeuds()
         self._ajouter_arcs()
+        self._ajouter_noeuds_virtuels()
 
     def _ajouter_noeuds(self) -> None:
         """Ajoute les noeuds valides au graphe."""
@@ -68,3 +73,25 @@ class GrapheDeploiement:
                 + self.G.nodes[destination]["cout_ecart"]
             )
             self.G.add_edge(source, destination, poids=poids, echanges=echanges)
+
+    def _ajouter_noeuds_virtuels(self) -> None:
+        """Ajoute source/puits quand effectif_initial ou effectif_final est libre."""
+        if self.probleme.effectif_initial is None:
+            self.G.add_node(NOEUD_SOURCE)
+            for effectif in range(self.probleme.effectif_max + 1):
+                noeud = (0, effectif)
+                if noeud in self.G:
+                    self.G.add_edge(
+                        NOEUD_SOURCE,
+                        noeud,
+                        poids=self.G.nodes[noeud]["cout_ecart"],
+                        echanges=0,
+                    )
+
+        if self.probleme.effectif_final is None:
+            self.G.add_node(NOEUD_PUITS)
+            dernier = len(self.probleme.mois) - 1
+            for effectif in range(self.probleme.effectif_max + 1):
+                noeud = (dernier, effectif)
+                if noeud in self.G:
+                    self.G.add_edge(noeud, NOEUD_PUITS, poids=0, echanges=0)
