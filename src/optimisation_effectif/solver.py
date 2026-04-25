@@ -1,3 +1,5 @@
+from typing import cast
+
 import networkx as nx
 
 from .graph import NOEUD_PUITS, NOEUD_SOURCE, GrapheDeploiement
@@ -121,7 +123,7 @@ def resoudre(probleme: ProblemeDeploiement) -> SolutionDeploiement:
 
     chemin_trimmed: list[Node] = chemin_brut[1:] if debut_libre else chemin_brut
     chemin_trimmed = chemin_trimmed[:-1] if fin_libre else chemin_trimmed
-    chemin: list[tuple[int, int]] = chemin_trimmed  # type: ignore[assignment]
+    chemin = cast(list[tuple[int, int]], chemin_trimmed)
 
     etapes = _construire_plan(graph, chemin, probleme)
     cout_total = etapes[-1].cout_cumule if etapes else 0.0
