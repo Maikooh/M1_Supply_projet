@@ -10,21 +10,20 @@ from .models import ProblemeDeploiement
 def ecart_est_valide(
     mois_nom: str, effectif: int, probleme: ProblemeDeploiement
 ) -> bool:
-    mois_corrige = mois_nom.capitalize()
-    if mois_corrige not in probleme.besoins:
-        raise KeyError(f"Le mois '{mois_nom}' n'est pas défini dans les besoins du probleme.")
-    
-    besoin = probleme.besoins[mois_corrige]
+    besoin = probleme.besoins.get(mois_nom.capitalize())
+    if besoin is None:
+        return True
+
     manquants = max(besoin - effectif, 0)
     return manquants <= probleme.limite_heures_sup * besoin
+
 
 def calculer_cout_ecart(
     mois_nom: str, effectif: int, probleme: ProblemeDeploiement
 ) -> tuple[float, int, int]:
-    nom_corrige = mois_nom.capitalize()
-
-    if nom_corrige not in probleme.besoins:
-        raise KeyError(f"Le mois '{mois_nom}' est introuvable (vérifiez accents/orthographe).")
+    besoin = probleme.besoins.get(mois_nom.capitalize())
+    if besoin is None:
+        return 0.0, 0, 0
 
     if not ecart_est_valide(mois_nom, effectif, probleme):
         msg = (
@@ -33,7 +32,6 @@ def calculer_cout_ecart(
         )
         raise ValueError(msg)
 
-    besoin = probleme.besoins[nom_corrige]
     surnumeraires = max(effectif - besoin, 0)
     manquants = max(besoin - effectif, 0)
     cout = probleme.cout_ecart * (surnumeraires + manquants)

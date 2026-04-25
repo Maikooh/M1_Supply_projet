@@ -111,3 +111,20 @@ def test_limite_heures_sup_nulle(probleme_test):
     """Si limite_heures_sup est 0, aucun manque n'est toléré."""
     probleme_test.limite_heures_sup = 0.0
     assert ecart_est_valide("Février", 19, probleme_test) is False
+
+def test_valeurs_negatives(probleme_test):
+    """Vérifie le comportement avec des effectifs négatifs."""
+    with pytest.raises(ValueError):
+        calculer_cout_ecart("Janvier", -1, probleme_test)
+
+def test_limites_a_zero(probleme_test):
+    """Vérifie quand les limites d'échanges sont à zéro (blocage total)."""
+    probleme_test.echanges_max_absolu = 0
+    assert echange_autorise(10, 11, probleme_test) is False
+
+def test_echange_autorise_sans_fraction(probleme_test):
+    """Vérifie que si la fraction est None, seule la limite absolue compte."""
+    probleme_test.fraction_echanges_max = None
+    probleme_test.echanges_max_absolu = 5
+    assert echange_autorise(10, 15, probleme_test) is True
+    assert echange_autorise(10, 16, probleme_test) is False
