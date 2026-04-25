@@ -15,30 +15,18 @@ def _trouver_chemin(
 ) -> tuple[list[Node], float]:
     """Trouve le chemin de coût minimal dans le DAG via Bellman-Ford.
 
-    Utilise les noeuds source/puits quand effectif_initial ou
-    effectif_final est None, permettant au solveur de choisir librement
-    l'effectif optimal de départ et/ou d'arrivée.
+    Utilise systématiquement les nœuds source/puits, dont les arêtes
+    encapsulent le coût du premier nœud (poids=cout_ecart), garantissant
+    que path_weight reflète le coût total sans correctif conditionnel.
     """
-    noeud_depart = (
-        NOEUD_SOURCE
-        if probleme.effectif_initial is None
-        else (0, probleme.effectif_initial)
-    )
-    noeud_arrivee = (
-        NOEUD_PUITS
-        if probleme.effectif_final is None
-        else (len(probleme.mois) - 1, probleme.effectif_final)
-    )
-
-    if noeud_depart not in graph or noeud_arrivee not in graph:
+    if NOEUD_SOURCE not in graph or NOEUD_PUITS not in graph:
         raise ValueError(
-            f"Le noeud de départ {noeud_depart} ou d'arrivée "
-            f"{noeud_arrivee} est manquant dans le graphe."
+            "Les nœuds virtuels source/puits sont manquants dans le graphe."
         )
 
     try:
         chemin = nx.bellman_ford_path(
-            graph, noeud_depart, noeud_arrivee, weight="poids"
+            graph, NOEUD_SOURCE, NOEUD_PUITS, weight="poids"
         )
         cout_total = nx.path_weight(graph, chemin, weight="poids")
     except nx.NetworkXNoPath:
@@ -118,15 +106,10 @@ def resoudre(probleme: ProblemeDeploiement) -> SolutionDeploiement:
     graph = GrapheDeploiement(probleme).G
     chemin_brut, cout_total = _trouver_chemin(graph, probleme)
 
-    debut_libre = probleme.effectif_initial is None
-    fin_libre = probleme.effectif_final is None
-
-    chemin_trimmed: list[Node] = chemin_brut[1:] if debut_libre else chemin_brut
-    chemin_trimmed = chemin_trimmed[:-1] if fin_libre else chemin_trimmed
-    chemin = cast(list[tuple[int, int]], chemin_trimmed)
+    # chemin_brut commence toujours par NOEUD_SOURCE et finit par NOEUD_PUITS
+    chemin = cast(list[tuple[int, int]], chemin_brut[1:-1])
 
     etapes = _construire_plan(graph, chemin, probleme)
-    cout_total = etapes[-1].cout_cumule if etapes else 0.0
 
     return SolutionDeploiement(
         chemin=chemin,
