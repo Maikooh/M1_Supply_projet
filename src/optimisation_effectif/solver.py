@@ -119,10 +119,8 @@ def resoudre(probleme: ProblemeDeploiement) -> SolutionDeploiement:
     chemin = chemin_brut[1:] if debut_libre else chemin_brut
     chemin = chemin[:-1] if fin_libre else chemin
 
-    if not debut_libre:
-        cout_total += graph.nodes[chemin[0]]["cout_ecart"]
-
     etapes = _construire_plan(graph, chemin, probleme)
+    cout_total = etapes[-1].cout_cumule if etapes else 0.0
 
     return SolutionDeploiement(
         chemin=chemin,

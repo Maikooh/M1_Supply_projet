@@ -2,6 +2,8 @@
 Ce fichier contient les fonctions de calcul
 des coûts pour le problème de déploiement."""
 
+import math
+
 from .models import ProblemeDeploiement
 
 
@@ -40,8 +42,15 @@ def echange_autorise(
     effectif_actuel: int, effectif_suivant: int, probleme: ProblemeDeploiement
 ) -> bool:
     echanges = abs(effectif_suivant - effectif_actuel)
-    echanges_max_fraction = int(probleme.fraction_echanges_max * effectif_actuel)
-    echanges_max = min(probleme.echanges_max_absolu, echanges_max_fraction)
+
+    if probleme.fraction_echanges_max is None:
+        echanges_max = probleme.echanges_max_absolu
+    else:
+        echanges_max_fraction = math.floor(
+            probleme.fraction_echanges_max * effectif_actuel + 1e-9
+        )
+        echanges_max = min(probleme.echanges_max_absolu, echanges_max_fraction)
+
     return echanges <= echanges_max
 
 

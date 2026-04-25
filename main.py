@@ -22,14 +22,14 @@ probleme = ProblemeDeploiement(
         "Juillet": 6,
         "Aout": 2,
     },
-    effectif_initial=30,
+    effectif_initial=3,
     effectif_final=3,
     cout_changement=160,
     cout_ecart=200,
     limite_heures_sup=0.25,
     echanges_max_absolu=3,
     effectif_max=30,
-    fraction_echanges_max=0.5,
+    fraction_echanges_max=1 / 3,
 )
 
 solution = resoudre(probleme)
