@@ -3,11 +3,14 @@ import networkx as nx
 from .graph import NOEUD_PUITS, NOEUD_SOURCE, GrapheDeploiement
 from .models import EtapeDeploiement, ProblemeDeploiement, SolutionDeploiement
 
+# Un nœud est soit un tuple (indice_mois, effectif), soit un identifiant virtuel (str)
+Node = tuple[int, int] | str
+
 
 def _trouver_chemin(
     graph: nx.DiGraph,
     probleme: ProblemeDeploiement,
-) -> tuple[list, float]:
+) -> tuple[list[Node], float]:
     """Trouve le chemin de coût minimal dans le DAG via Bellman-Ford.
 
     Utilise les noeuds source/puits quand effectif_initial ou
@@ -116,8 +119,9 @@ def resoudre(probleme: ProblemeDeploiement) -> SolutionDeploiement:
     debut_libre = probleme.effectif_initial is None
     fin_libre = probleme.effectif_final is None
 
-    chemin = chemin_brut[1:] if debut_libre else chemin_brut
-    chemin = chemin[:-1] if fin_libre else chemin
+    chemin_trimmed: list[Node] = chemin_brut[1:] if debut_libre else chemin_brut
+    chemin_trimmed = chemin_trimmed[:-1] if fin_libre else chemin_trimmed
+    chemin: list[tuple[int, int]] = chemin_trimmed  # type: ignore[assignment]
 
     etapes = _construire_plan(graph, chemin, probleme)
     cout_total = etapes[-1].cout_cumule if etapes else 0.0
