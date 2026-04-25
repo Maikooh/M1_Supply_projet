@@ -212,5 +212,80 @@ def test_trouver_chemin_noeud_absent_leve_exception():
         fraction_echanges_max=0.5,
     )
     graphe_vide = nx.DiGraph()
-    with pytest.raises(ValueError, match="manquant dans le graphe"):
+    with pytest.raises(ValueError, match="manquants dans le graphe"):
         _trouver_chemin(graphe_vide, probleme)
+
+
+# effectif initial / final libres
+
+
+def test_effectif_initial_libre_choisit_optimal():
+    """Quand effectif_initial=None, le solveur choisit l'effectif de départ optimal."""
+    probleme = ProblemeDeploiement(
+        mois=["Janvier", "Février"],
+        besoins={"Janvier": 7, "Février": 5},
+        effectif_initial=None,
+        effectif_final=5,
+        cout_changement=160,
+        cout_ecart=200,
+        limite_heures_sup=0.0,
+        echanges_max_absolu=5,
+        fraction_echanges_max=0.5,
+    )
+    solution = resoudre(probleme)
+    assert solution.chemin[0] == (0, 7)
+    assert solution.cout_total == 320.0
+
+
+def test_effectif_final_libre_choisit_optimal():
+    """Quand effectif_final=None, le solveur choisit l'effectif de fin optimal."""
+    probleme = ProblemeDeploiement(
+        mois=["Janvier", "Février"],
+        besoins={"Janvier": 5, "Février": 7},
+        effectif_initial=5,
+        effectif_final=None,
+        cout_changement=160,
+        cout_ecart=200,
+        limite_heures_sup=0.0,
+        echanges_max_absolu=5,
+        fraction_echanges_max=0.5,
+    )
+    solution = resoudre(probleme)
+    assert solution.chemin[-1] == (1, 7)
+    assert solution.cout_total == 320.0
+
+
+def test_effectif_initial_et_final_libres_coût_nul():
+    """Quand les deux sont None, le solveur choisit la trajectoire optimale."""
+    probleme = ProblemeDeploiement(
+        mois=["Janvier", "Février"],
+        besoins={"Janvier": 5, "Février": 5},
+        effectif_initial=None,
+        effectif_final=None,
+        cout_changement=160,
+        cout_ecart=200,
+        limite_heures_sup=0.0,
+        echanges_max_absolu=5,
+        fraction_echanges_max=0.5,
+    )
+    solution = resoudre(probleme)
+    assert solution.cout_total == 0.0
+    assert solution.chemin == [(0, 5), (1, 5)]
+
+
+def test_effectif_max_explicite():
+    """effectif_max fourni explicitement est respecté sans erreur."""
+    probleme = ProblemeDeploiement(
+        mois=["Janvier"],
+        besoins={"Janvier": 5},
+        effectif_initial=5,
+        effectif_final=5,
+        effectif_max=10,
+        cout_changement=160,
+        cout_ecart=200,
+        limite_heures_sup=0.25,
+        echanges_max_absolu=5,
+        fraction_echanges_max=0.5,
+    )
+    solution = resoudre(probleme)
+    assert solution.cout_total == 0.0
