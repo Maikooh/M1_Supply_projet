@@ -88,3 +88,26 @@ def test_est_effectif_valide_si_final_est_none(probleme_test):
     probleme_test.effectif_final = None
     dernier_idx = len(probleme_test.mois) - 1
     assert est_effectif_valide(dernier_idx, 30, probleme_test) is True
+
+def test_mois_vide(probleme_test):
+    """Vérifie le comportement si la liste des mois est vide."""
+    probleme_test.mois = []
+    assert est_effectif_valide(0, 10, probleme_test) is True 
+
+def test_besoins_manquants(probleme_test):
+    """Vérifie si le dictionnaire des besoins est totalement vide."""
+    probleme_test.besoins = {}
+    assert ecart_est_valide("Janvier", 10, probleme_test) is True
+    cout, _, _ = calculer_cout_ecart("Janvier", 10, probleme_test)
+    assert cout == 0.0
+
+def test_echange_max_absolu_prioritaire(probleme_test):
+    """Vérifie que la limite absolue bride la fraction si elle est plus basse."""
+    probleme_test.fraction_echanges_max = 0.2
+    probleme_test.echanges_max_absolu = 5
+    assert echange_autorise(100, 120, probleme_test) is False
+
+def test_limite_heures_sup_nulle(probleme_test):
+    """Si limite_heures_sup est 0, aucun manque n'est toléré."""
+    probleme_test.limite_heures_sup = 0.0
+    assert ecart_est_valide("Février", 19, probleme_test) is False
