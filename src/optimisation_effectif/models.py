@@ -43,7 +43,7 @@ class ProblemeDeploiement(BaseModel):
     cout_changement: NonNegativeFloat
     cout_ecart: NonNegativeFloat
 
-    limite_heures_sup: Annotated[NonNegativeFloat, Field(lt=1.0)] | None = None
+    limite_heures_sup: Annotated[NonNegativeFloat, Field(le=1.0)] | None = None
     echanges_max_absolu: NonNegativeInt
     fraction_echanges_max: float | None = None
 
@@ -91,7 +91,7 @@ class EtapeDeploiement(BaseModel):
     manquants: NonNegativeInt
     cout_ecart: NonNegativeFloat
     cout_cumule: NonNegativeFloat
-    limite_heures_sup: Annotated[NonNegativeFloat, Field(lt=1.0)] | None = None
+    limite_heures_sup: Annotated[NonNegativeFloat, Field(le=1.0)] | None = None
 
     @model_validator(mode="after")
     def verifier_ecart(self):

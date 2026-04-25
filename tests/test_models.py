@@ -4,6 +4,7 @@ Module de tests unitaires pour models.py
 """
 
 import pytest
+from pydantic import ValidationError
 from src.optimisation_effectif.models import (
     EtapeDeploiement,
     ProblemeDeploiement,
@@ -60,6 +61,23 @@ def test_effectif_max_calcule_automatiquement():
     """effectif_max à None → calculé comme max(initial, final, max(besoins))."""
     probleme = _probleme(effectif_max=None)
     assert probleme.effectif_max == max(3, 3, 6)
+
+def test_effectif_max_calcule_automatiquement():
+    """effectif_max à None → calculé comme max(initial, final, max(besoins))."""
+    probleme = _probleme(effectif_max=None)
+    assert probleme.effectif_max == max(3, 3, 6)
+
+def test_effectif_max_calcule_avec_initial_dominant():
+    """Vérifie que effectif_max prend l'initial s'il est le plus grand."""
+    # initial=20, final=10, max besoins=6 -> effectif_max doit être 20
+    probleme = _probleme(effectif_initial=20, effectif_final=10, effectif_max=None)
+    assert probleme.effectif_max == 20
+
+def test_effectif_max_calcule_avec_final_dominant():
+    """Vérifie que effectif_max prend le final s'il est le plus grand."""
+    # initial=5, final=15, max besoins=6 -> effectif_max doit être 15
+    probleme = _probleme(effectif_initial=5, effectif_final=15, effectif_max=None)
+    assert probleme.effectif_max == 15
 
 def test_etape_valide():
     """Création d'une étape valide sans erreur."""
@@ -123,3 +141,16 @@ def test_solution_valide():
         lignes=[etape],
     )
     assert solution.cout_total == 160.0
+    assert len(solution.lignes) == 1
+    assert solution.chemin == [(0, 1)]
+
+def test_creation_sans_besoin():
+    """Vérifie qu'on peut créer un problème sans besoins (dict vide)."""
+    probleme = _probleme(besoins={}, effectif_initial=5, effectif_max=None)
+    assert probleme.besoins == {}
+    assert probleme.effectif_max == 5
+
+def test_limite_heures_sup_invalide():
+    """Vérifie que Pydantic bloque une limite d'heures sup >= 1."""
+    with pytest.raises(ValidationError):
+        _probleme(limite_heures_sup=1.5)
