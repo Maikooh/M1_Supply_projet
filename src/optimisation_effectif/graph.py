@@ -75,9 +75,25 @@ class GrapheDeploiement:
             self.G.add_edge(source, destination, poids=poids, echanges=echanges)
 
     def _ajouter_noeuds_virtuels(self) -> None:
-        """Ajoute source/puits quand effectif_initial ou effectif_final est libre."""
-        if self.probleme.effectif_initial is None:
-            self.G.add_node(NOEUD_SOURCE)
+        """Ajoute systématiquement les nœuds source et puits.
+
+        Quand effectif_initial est fixé, une seule arête source → (0, effectif_initial)
+        est créée avec poids=cout_ecart du nœud de départ, de sorte que le poids total
+        du chemin calculé par Bellman-Ford inclut toujours le coût du premier nœud.
+        Quand effectif_initial est None, une arête est créée vers chaque nœud valide
+        du premier mois. La même logique s'applique symétriquement au nœud puits.
+        """
+        self.G.add_node(NOEUD_SOURCE)
+        if self.probleme.effectif_initial is not None:
+            noeud = (0, self.probleme.effectif_initial)
+            if noeud in self.G:
+                self.G.add_edge(
+                    NOEUD_SOURCE,
+                    noeud,
+                    poids=self.G.nodes[noeud]["cout_ecart"],
+                    echanges=0,
+                )
+        else:
             for effectif in range(self.probleme.effectif_max + 1):
                 noeud = (0, effectif)
                 if noeud in self.G:
@@ -88,9 +104,13 @@ class GrapheDeploiement:
                         echanges=0,
                     )
 
-        if self.probleme.effectif_final is None:
-            self.G.add_node(NOEUD_PUITS)
-            dernier = len(self.probleme.mois) - 1
+        self.G.add_node(NOEUD_PUITS)
+        dernier = len(self.probleme.mois) - 1
+        if self.probleme.effectif_final is not None:
+            noeud = (dernier, self.probleme.effectif_final)
+            if noeud in self.G:
+                self.G.add_edge(noeud, NOEUD_PUITS, poids=0, echanges=0)
+        else:
             for effectif in range(self.probleme.effectif_max + 1):
                 noeud = (dernier, effectif)
                 if noeud in self.G:
