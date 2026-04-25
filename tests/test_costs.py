@@ -77,3 +77,14 @@ def test_calculer_cout_limite_exacte_heures_sup(probleme_test):
     assert cout == pytest.approx(1000.0)
     assert sur == 0
     assert manq == 5
+
+def test_est_effectif_valide_si_initial_est_none(probleme_test):
+    """Vérifie que l'effectif est valide au mois 0 si initial est None."""
+    probleme_test.effectif_initial = None
+    assert est_effectif_valide(0, 30, probleme_test) is True
+
+def test_est_effectif_valide_si_final_est_none(probleme_test):
+    """Vérifie que l'effectif est valide au dernier mois si final est None."""
+    probleme_test.effectif_final = None
+    dernier_idx = len(probleme_test.mois) - 1
+    assert est_effectif_valide(dernier_idx, 30, probleme_test) is True
