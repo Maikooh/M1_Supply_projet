@@ -4,9 +4,8 @@ import webbrowser
 import dash
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
-
-from src.optimisation_effectif.Dashboard.callbacks import init as init_callbacks
-from src.optimisation_effectif.Dashboard.layout import create_layout
+from optimisation_effectif.Dashboard.callbacks import init as init_callbacks
+from optimisation_effectif.Dashboard.layout import create_layout
 
 load_figure_template(["flatly", "darkly"])
 

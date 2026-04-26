@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from dash import ALL, Input, Output, State, callback, ctx, html, no_update
 from dash_bootstrap_templates import ThemeSwitchAIO
 
-from src.optimisation_effectif import ProblemeDeploiement, resoudre
+from optimisation_effectif import ProblemeDeploiement, resoudre
 
 from .layout import BESOINS_DEFAUT, MOIS_ORDONNES
 
