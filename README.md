@@ -1,47 +1,47 @@
 # optimisation-effectif
-
-**Planification optimale des effectifs par plus court chemin dans un graphe acyclique.**
-
 [![Python](https://img.shields.io/badge/python-3.13%2B-blue)](https://www.python.org/)
 [![Pydantic](https://img.shields.io/badge/pydantic-v2-orange)](https://docs.pydantic.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688)](https://fastapi.tiangolo.com/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
----
+>**Planification optimale des effectifs pour minimiser les coûts tout en respectant les contraintes opérationnelles.**
 
-## Le problème
+## Problème
+Ce projet résout un [problème de planification des effectifs](https://github.com/MECEN-TOURS/SC-2025-2026/tree/main/projets/10) :
 
-Toute organisation confrontée à une demande variable dans le temps doit ajuster ses effectifs de façon dynamique : trop de personnel engendre des surcoûts, pas assez dégrade la qualité de service. Les décisions d'embauche et de licenciement ont elles-mêmes un coût, ce qui rend le problème non trivial.
+À partir de :
+- besoins mensuels en personnel
+- coûts d’embauche et de réduction d’effectif
+- pénalités en cas de sureffectif ou sous-effectif
 
-**`optimisation-effectif`** résout ce problème de planification multi-périodes de manière exacte, pour n'importe quel horizon temporel et n'importe quelle structure de coûts.
-
----
-
-## Méthode
-
-Le problème est modélisé comme un **graphe orienté acyclique (DAG)** :
-
-- chaque nœud `(période, effectif)` représente un état possible,
-- chaque arc pondéré représente une transition d'une période à la suivante,
-- le **plus court chemin** (Bellman-Ford via NetworkX) retourne le plan de coût minimal.
-
-Cette approche garantit l'**optimalité globale** de la solution, contrairement aux heuristiques greedy, et reste **polynomiale** pour des horizons de taille raisonnable.
+Il calcule la stratégie optimale minimisant le coût total.
 
 ---
+## Fonctionnalités
 
+- 📊 Planification optimale des effectifs
+- ⚡ Résolution efficace via un graphe acyclique (plus court chemin)
+- 🧩 Modélisation robuste avec Pydantic v2
+- 🖥️ Interface CLI (Typer + Rich)
+- 🌐 Visualisation via un dashboard interactif
+
+
+---
 ## Démonstration
 
-![Démonstration](.img/demonstration.gif)
+### via la CLI
+
+**Exécution complète du workflow (génération → visualisation → résolution) :**
+
+![Démonstration](./img/demonstration.gif)
+
 ---
+## Prérequis
 
+- Python 3.13+
+- uv (recommandé)
+
+---
 ## Installation
-
-```bash
-pip install optimisation-effectif
-```
-
-Ou depuis les sources :
-
 ```bash
 git clone <url-du-repo>
 cd optimisation-effectif
@@ -79,48 +79,58 @@ print(solution.cout_total)   # 2160.0
 
 ```bash
 # Générer un fichier JSON exemple
-python -m optimisation_effectif.interfaces demo
+uv run python -m optimisation_effectif.interfaces demo
 
 # Visualiser le problème
-python -m optimisation_effectif.interfaces view demonstration.json
+uv run python -m optimisation_effectif.interfaces view demonstration.json
 
 # Résoudre
-python -m optimisation_effectif.interfaces solve demonstration.json
+uv run python -m optimisation_effectif.interfaces solve demonstration.json
 ```
 
-### API REST
+### Interactive dashboard
 
 ```bash
-python -m optimisation_effectif.api
+uv run python dashboard.py
 ```
-
-| Méthode | Route | Description |
-|---------|-------|-------------|
-| `GET` | `/deploiement/demo` | Retourne le problème exemple |
-| `POST` | `/deploiement/resoudre` | Résout un problème, retourne la solution |
-| `GET` | `/docs` | Swagger UI interactif |
-
-```bash
-curl -X POST http://127.0.0.1:8000/deploiement/resoudre \
-  -H "Content-Type: application/json" \
-  -d @demonstration.json
-```
-
 ---
 
 ## Structure
 
-```
+```text
 optimisation_effectif/
 ├── models.py        # Modèles Pydantic — ProblemeDeploiement, SolutionDeploiement
 ├── costs.py         # Calcul des coûts et validations
 ├── graph.py         # Construction du DAG (NetworkX)
 ├── solver.py        # Résolution par Bellman-Ford
 ├── interfaces/      # CLI Typer + Rich
-└── api/             # API FastAPI
+└── Dashboard/       # Dashboard interactif
+```
+
+
+---
+## Principe
+
+Le problème est modélisé comme un graphe orienté acyclique (DAG) :
+
+- Chaque nœud représente un effectif à un mois donné
+- Chaque arête représente une transition (embauche, réduction, maintien)
+- Un coût est associé à chaque transition
+
+La solution optimale correspond au plus court chemin dans ce graphe,
+calculé avec l’algorithme de Bellman-Ford.
+
+---
+## Développement
+
+```bash
+uv sync --group dev
+pytest
+ruff check .
 ```
 ---
-
 ## Licence
 
-MIT
+**CC-BY-SA - Master MECEN 2025-2026**
+
+Projet développé dans le cadre du Master Mecen de l'Université de Tours.
