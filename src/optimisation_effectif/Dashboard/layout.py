@@ -151,6 +151,7 @@ def create_layout() -> dbc.Container:
                                                         min=0,
                                                         max=500,
                                                         step=1,
+                                                        size="sm",
                                                     ),
                                                     dbc.InputGroupText(
                                                         dbc.Switch(
@@ -185,6 +186,7 @@ def create_layout() -> dbc.Container:
                                                         min=0,
                                                         max=500,
                                                         step=1,
+                                                        size="sm",
                                                     ),
                                                     dbc.InputGroupText(
                                                         dbc.Switch(
@@ -261,14 +263,10 @@ def create_layout() -> dbc.Container:
                                     step=0.01,
                                     value=0.25,
                                     marks={
-                                        0.1: "10%",
-                                        0.25: "25%",
-                                        0.5: "50%",
-                                        0.75: "75%",
-                                    },
-                                    tooltip={
-                                        "placement": "bottom",
-                                        "always_visible": True,
+                                        0.1: {"label": "10%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
+                                        0.25: {"label": "25%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
+                                        0.5: {"label": "50%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
+                                        0.75: {"label": "75%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
                                     },
                                 ),
                             ],
@@ -302,14 +300,10 @@ def create_layout() -> dbc.Container:
                                     step=0.01,
                                     value=1 / 3,
                                     marks={
-                                        0.25: "25%",
-                                        0.5: "50%",
-                                        0.75: "75%",
-                                        1.0: "100%",
-                                    },
-                                    tooltip={
-                                        "placement": "bottom",
-                                        "always_visible": True,
+                                        0.25: {"label": "25%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
+                                        0.5: {"label": "50%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
+                                        0.75: {"label": "75%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
+                                        1.0: {"label": "100%", "style": {"color": "#adb5bd", "fontWeight": "600"}},
                                     },
                                 ),
                             ]

@@ -187,9 +187,9 @@ def solve(
         e.besoin_minimal if e.besoin_minimal is not None else 0 for e in solution.lignes
     ]
 
-    c_besoin = "rgba(255, 210, 60, 0.65)" if is_dark else "rgba(231, 111, 81, 0.45)"
-    c_ecart = "rgba(255, 210, 60, 0.85)" if is_dark else "rgba(231, 111, 81, 0.75)"
-    c_cumul = "#90caf9" if is_dark else "#264653"
+    c_besoin = "rgba(231, 76, 60, 0.55)" if not is_dark else "rgba(239, 154, 154, 0.75)"
+    c_ecart  = "rgba(231, 76, 60, 0.65)" if not is_dark else "rgba(239, 154, 154, 0.85)"
+    c_cumul  = "#7f1d1d" if not is_dark else "#ff8a8a"
 
     fig1 = go.Figure()
     fig1.add_trace(
