@@ -1,127 +1,136 @@
-Ce Projet met en place le [sujet 10](https://github.com/MECEN-TOURS/SC-2025-2026/tree/main/projets/10)
+# optimisation-effectif
+[![Python](https://img.shields.io/badge/python-3.13%2B-blue)](https://www.python.org/)
+[![Pydantic](https://img.shields.io/badge/pydantic-v2-orange)](https://docs.pydantic.dev/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+>**Planification optimale des effectifs pour minimiser les coûts tout en respectant les contraintes opérationnelles.**
+
+## Problème
+Ce projet résout un [problème de planification des effectifs](https://github.com/MECEN-TOURS/SC-2025-2026/tree/main/projets/10) :
+
+À partir de :
+- besoins mensuels en personnel
+- coûts d’embauche et de réduction d’effectif
+- pénalités en cas de sureffectif ou sous-effectif
+
+Il calcule la stratégie optimale minimisant le coût total.
 
 ---
-# Installation
+## Fonctionnalités
 
+- 📊 Planification optimale des effectifs
+- ⚡ Résolution efficace via un graphe acyclique (plus court chemin)
+- 🧩 Modélisation robuste avec Pydantic v2
+- 🖥️ Interface CLI (Typer + Rich)
+- 🌐 Visualisation via un dashboard interactif
+
+
+---
+## Démonstration
+
+### via la CLI
+
+**Exécution complète du workflow (génération → visualisation → résolution) :**
+
+![Démonstration](./img/demonstration.gif)
+
+---
+## Prérequis
+
+- Python 3.13+
+- uv (recommandé)
+
+---
+## Installation
 ```bash
 git clone <url-du-repo>
-cd <nom-du-repo>
+cd optimisation-effectif
+uv sync
 ```
 
 ---
-# Environnement de développement
 
-Le projet utilise **uv** pour la gestion des dépendances.
+## Utilisation
+
+### Python
+
+```python
+from optimisation_effectif import ProblemeDeploiement, resoudre
+
+probleme = ProblemeDeploiement(
+    mois=["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin",
+          "Juillet", "Aout", "Septembre"],
+    besoins={"Mars": 4, "Avril": 6, "Mai": 7, "Juin": 4, "Juillet": 6, "Aout": 2},
+    effectif_initial=3,
+    effectif_final=3,
+    effectif_max=30,
+    cout_changement=160,
+    cout_ecart=200,
+    limite_heures_sup=0.25,
+    echanges_max_absolu=3,
+    fraction_echanges_max=1 / 3,
+)
+
+solution = resoudre(probleme)
+print(solution.cout_total)   # 2160.0
+```
+
+### CLI
+
+```bash
+# Générer un fichier JSON exemple
+uv run python -m optimisation_effectif.interfaces demo
+
+# Visualiser le problème
+uv run python -m optimisation_effectif.interfaces view demonstration.json
+
+# Résoudre
+uv run python -m optimisation_effectif.interfaces solve demonstration.json
+```
+
+### Interactive dashboard
+
+```bash
+uv run python dashboard.py
+```
+---
+
+## Structure
+
+```text
+optimisation_effectif/
+├── models.py        # Modèles Pydantic — ProblemeDeploiement, SolutionDeploiement
+├── costs.py         # Calcul des coûts et validations
+├── graph.py         # Construction du DAG (NetworkX)
+├── solver.py        # Résolution par Bellman-Ford
+├── interfaces/      # CLI Typer + Rich
+└── Dashboard/       # Dashboard interactif
+```
+
+
+---
+## Principe
+
+Le problème est modélisé comme un graphe orienté acyclique (DAG) :
+
+- Chaque nœud représente un effectif à un mois donné
+- Chaque arête représente une transition (embauche, réduction, maintien)
+- Un coût est associé à chaque transition
+
+La solution optimale correspond au plus court chemin dans ce graphe,
+calculé avec l’algorithme de Bellman-Ford.
+
+---
+## Développement
 
 ```bash
 uv sync --group dev
+pytest
+ruff check .
 ```
-
 ---
-# Exécution
+## Licence
 
-Exemple avec un script Python :
+**CC-BY-SA - Master MECEN 2025-2026**
 
-```bash
-uv run main.py
-```
-
-Si vous utilisez un notebook **marimo** :
-
-```bash
-uv run marimo edit notebook.py
-```
-
----
-# Qualité de code
-
-Essayez d’utiliser du type hinting autant que possible pour garder un code clair et facile à maintenir.
-
-Le projet utilise **pre-commit** (RUFF) pour le linting et le formatage.
-
->**Note** : ça peut bloquer vos commits pour non respect de la qualité du code parfois ça fixe auto parfois non dans les 2 cas il faudra refaire le commit après avoir fait les modifications nécessaires.
-
-Si besoin (**se fait auto à chaque commit**) :
-
-Lancer manuellement les vérifications 
-```bash
-uv run pre-commit run --all-files
-```
-
-
-
----
-# Workflow Git
-## Principe
-
-* La branche principale de développement est : `main`
-* Les contributions passent par des Pull Requests (PR)
-
----
-## Étape 1 : créer une branche
-
-Depuis la branche `main` à jour :
-
-```bash
-git checkout main
-git pull
-```
-
-Créer une branche selon le type de travail :
-
-```bash
-git checkout -b feature/nom_de_la_feature
-git checkout -b fix/nom_du_probleme
-git checkout -b docs/nom_de_la_doc
-git checkout -b tests/nom_du_test
-```
-
----
-
-## Étape 2 : commit & push
-
-```bash
-git add .
-git commit -m "message clair et concis"
-git push -u origin <nom_de_la_branche>
-```
-
----
-## Étape 3 : Pull Request
-
-* Ouvrir une PR vers `main`
-* Ajouter une description claire
-* Demander une review
-* **Prévenir l’équipe**
-
----
-
-## Étape 4 : merge
-
-* Attendre validation (au moins 1 personne du groupe)
-* Corriger si nécessaire
-* Merge dans `main`
-
----
-# Bonnes pratiques
-
-* Faire des commits petits et fréquents
-* Nommer les branches clairement
-* Toujours pull avant de commencer
-* Vérifier que le lint passe avant de push
-
----
-
-# Structure du projet (exemple)
-
->Faire d'une manière logique
-```
-.
-├── docs/
-├── notebooks/
-├── tests/
-├── pyproject.toml
-└── README.md
-```
-
----
+Projet développé dans le cadre du Master Mecen de l'Université de Tours.

@@ -14,3 +14,7 @@ wheels/
 
 #marimo 
 __marimo__/
+
+
+#fichier du package
+demonstration.json
