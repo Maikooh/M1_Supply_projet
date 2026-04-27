@@ -1,5 +1,7 @@
 """Description.
-Ce fichier encode les données utilisées."""
+
+Module implémentant les modèles de données pour le problème de déploiement
+d'effectifs."""
 
 from typing import Annotated
 
@@ -14,24 +16,53 @@ from pydantic import (
 
 
 class ProblemeDeploiement(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-    """Modèle de données pour le problème de déploiement.
+    """Encode les données d'un problème de déploiement d'effectifs.
 
-    Exemple d'utilisation::
+    Chaque mois de la liste ``mois`` peut avoir un besoin en personnel défini dans
+    ``besoins``. Les coûts ``cout_changement`` et ``cout_ecart`` pénalisent
+    respectivement les ajustements d'effectif et les écarts au besoin.
 
-        probleme = ProblemeDeploiement(
-            mois=["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin"],
-            besoins={"Mars": 4, "Avril": 6, "Mai": 7, "Juin": 4, "Juillet": 6},
-            effectif_initial=3,
-            effectif_final=3,
-            effectif_max=10,
-            cout_changement=160,
-            cout_ecart=200,
-            limite_heures_sup=0.25,
-            echanges_max_absolu=3,
-            fraction_echanges_max=0.3,
-        )
+    Avant la création de l'objet on vérifie que :
+
+    - chaque clé de ``besoins`` appartient à la liste ``mois``
+    - ``effectif_initial`` et ``effectif_final`` sont inférieurs ou égaux à
+      ``effectif_max``
+    - si ``effectif_max`` est absent, il est déduit du maximum des valeurs
+      disponibles (besoins, effectif_initial, effectif_final)
+
+    Exemples :
+
+    >>> ProblemeDeploiement(
+    ...     mois=["Janvier"],
+    ...     besoins={"Fevrier": 2},
+    ...     effectif_initial=2,
+    ...     cout_changement=100,
+    ...     cout_ecart=150,
+    ...     limite_heures_sup=0.25,
+    ...     echanges_max_absolu=2,
+    ... )
+    Traceback (most recent call last):
+        ...
+    pydantic_core._pydantic_core.ValidationError: ...
+      Value error, 'Fevrier' dans besoins est absent de la liste mois ...
+
+    >>> ProblemeDeploiement(
+    ...     mois=["Janvier"],
+    ...     besoins={"Janvier": 2},
+    ...     effectif_initial=5,
+    ...     effectif_max=3,
+    ...     cout_changement=100,
+    ...     cout_ecart=150,
+    ...     limite_heures_sup=0.25,
+    ...     echanges_max_absolu=2,
+    ... )
+    Traceback (most recent call last):
+        ...
+    pydantic_core._pydantic_core.ValidationError: ...
+      Value error, L'effectif initial ne peut pas être supérieur ...
     """
+
+    model_config = ConfigDict(extra="forbid", strict=True)
 
     mois: list[str]
     besoins: dict[str, NonNegativeInt]
@@ -43,7 +74,7 @@ class ProblemeDeploiement(BaseModel):
     cout_changement: NonNegativeFloat
     cout_ecart: NonNegativeFloat
 
-    limite_heures_sup: Annotated[NonNegativeFloat, Field(lt=1.0)]
+    limite_heures_sup: Annotated[NonNegativeFloat, Field(le=1.0)] | None = None
     echanges_max_absolu: NonNegativeInt
     fraction_echanges_max: float | None = None
 
@@ -82,6 +113,35 @@ class ProblemeDeploiement(BaseModel):
 
 
 class EtapeDeploiement(BaseModel):
+    """Encode l'état du déploiement pour un mois donné.
+
+    Stocke l'effectif en place, le besoin minimal, les mouvements de personnel
+    et les coûts associés pour une étape de la solution.
+
+    Avant la création de l'objet on vérifie que :
+
+    - ``surnumeraires`` et ``manquants`` ne sont pas simultanément positifs
+    - si ``besoin_minimal`` est absent, l'écart est nul
+
+    Exemples :
+
+    >>> EtapeDeploiement(
+    ...     mois="Janvier",
+    ...     effectif=5,
+    ...     besoin_minimal=3,
+    ...     ajouts_suppressions=0,
+    ...     cout_ajustement=0.0,
+    ...     surnumeraires=1,
+    ...     manquants=1,
+    ...     cout_ecart=200.0,
+    ...     cout_cumule=200.0,
+    ... )
+    Traceback (most recent call last):
+        ...
+    pydantic_core._pydantic_core.ValidationError: ...
+      Value error, Mois 'Janvier' : surnuméraires et manquants ne peuvent ...
+    """
+
     mois: str
     effectif: NonNegativeInt
     besoin_minimal: NonNegativeInt | None
@@ -91,6 +151,7 @@ class EtapeDeploiement(BaseModel):
     manquants: NonNegativeInt
     cout_ecart: NonNegativeFloat
     cout_cumule: NonNegativeFloat
+    limite_heures_sup: Annotated[NonNegativeFloat, Field(le=1.0)] | None = None
 
     @model_validator(mode="after")
     def verifier_ecart(self):
@@ -105,8 +166,22 @@ class EtapeDeploiement(BaseModel):
             raise ValueError(f"Mois '{self.mois}' : écart non nul sans besoin défini")
         return self
 
+    @property
+    def manquants_apres_heures_sup(self) -> int:
+        """Personnes manquantes après application des heures supplémentaires."""
+        if self.limite_heures_sup is None or self.manquants == 0:
+            return self.manquants
+        capacite_avec_heures_sup = self.effectif * self.limite_heures_sup
+        return max(0, self.manquants - int(capacite_avec_heures_sup))
+
 
 class SolutionDeploiement(BaseModel):
+    """Encode une solution complète du problème de déploiement.
+
+    Contient le chemin optimal dans le graphe des effectifs, le coût total
+    et le détail mois par mois sous forme d'étapes.
+    """
+
     chemin: list[tuple[int, int]]
     cout_total: NonNegativeFloat
     lignes: list[EtapeDeploiement]

@@ -1,3 +1,8 @@
+"""Description.
+
+Module implémentant la résolution du problème de déploiement d'effectifs
+par recherche du plus court chemin dans le DAG via l'algorithme de Bellman-Ford."""
+
 from typing import cast
 
 import networkx as nx
@@ -18,6 +23,13 @@ def _trouver_chemin(
     Utilise systématiquement les nœuds source/puits, dont les arêtes
     encapsulent le coût du premier nœud (poids=cout_ecart), garantissant
     que path_weight reflète le coût total sans correctif conditionnel.
+
+    Args:
+        graph (nx.DiGraph): Le graphe de déploiement avec nœuds source et puits.
+        probleme (ProblemeDeploiement): Le problème de déploiement.
+
+    Returns:
+        tuple[list[Node], float]: Le chemin optimal et son coût total.
     """
     if NOEUD_SOURCE not in graph or NOEUD_PUITS not in graph:
         raise ValueError(
@@ -25,9 +37,7 @@ def _trouver_chemin(
         )
 
     try:
-        chemin = nx.bellman_ford_path(
-            graph, NOEUD_SOURCE, NOEUD_PUITS, weight="poids"
-        )
+        chemin = nx.bellman_ford_path(graph, NOEUD_SOURCE, NOEUD_PUITS, weight="poids")
         cout_total = nx.path_weight(graph, chemin, weight="poids")
     except nx.NetworkXNoPath:
         debut = (
@@ -60,7 +70,17 @@ def _construire_plan(
     chemin: list[tuple[int, int]],
     probleme: ProblemeDeploiement,
 ) -> list[EtapeDeploiement]:
-    """Construit le plan détaillé mois par mois à partir du chemin optimal."""
+    """Construit le plan détaillé mois par mois à partir du chemin optimal.
+
+    Args:
+        graph (nx.DiGraph): Le graphe contenant les données des nœuds.
+        chemin (list[tuple[int, int]]): Séquence de nœuds du chemin optimal,
+            sans les nœuds virtuels source et puits.
+        probleme (ProblemeDeploiement): Le problème de déploiement.
+
+    Returns:
+        list[EtapeDeploiement]: Les étapes détaillées mois par mois.
+    """
     etapes = []
     cumul = 0.0
 
@@ -88,6 +108,7 @@ def _construire_plan(
                 manquants=donnees_noeud["manquants"],
                 cout_ecart=donnees_noeud["cout_ecart"],
                 cout_cumule=cumul,
+                limite_heures_sup=probleme.limite_heures_sup,
             )
         )
 
@@ -98,10 +119,39 @@ def resoudre(probleme: ProblemeDeploiement) -> SolutionDeploiement:
     """Résout le problème de déploiement optimal de personnel.
 
     Construit le DAG, trouve le chemin de coût minimal via Bellman-Ford
-    et retourne la solution complète.
+    et retourne la solution complète avec le détail mois par mois.
 
-    Si effectif_initial ou effectif_final est None, le solveur choisit
-    automatiquement l'effectif optimal pour minimiser le coût total.
+    Si ``effectif_initial`` ou ``effectif_final`` est ``None``, le solveur
+    choisit automatiquement l'effectif optimal pour minimiser le coût total.
+
+    Args:
+        probleme (ProblemeDeploiement): Le problème de déploiement à résoudre.
+
+    Returns:
+        SolutionDeploiement: La solution optimale avec chemin, coût total
+            et détail mois par mois.
+
+    Avant de retourner on vérifie que :
+
+    - le DAG contient au moins un chemin admissible entre source et puits
+
+    Exemples :
+
+    >>> from optimisation_effectif.models import ProblemeDeploiement
+    >>> p = ProblemeDeploiement(
+    ...     mois=["Jan"],
+    ...     besoins={"Jan": 4},
+    ...     effectif_initial=0,
+    ...     effectif_final=0,
+    ...     cout_changement=100,
+    ...     cout_ecart=200,
+    ...     limite_heures_sup=0.0,
+    ...     echanges_max_absolu=0,
+    ... )
+    >>> resoudre(p)
+    Traceback (most recent call last):
+        ...
+    ValueError: Aucune solution trouvée avec les paramètres fournis. ...
     """
     graph = GrapheDeploiement(probleme).G
     chemin_brut, cout_total = _trouver_chemin(graph, probleme)
@@ -116,3 +166,25 @@ def resoudre(probleme: ProblemeDeploiement) -> SolutionDeploiement:
         cout_total=cout_total,
         lignes=etapes,
     )
+
+
+if __name__ == "__main__":
+    # 1. Créer un problème de test
+    test_prob = ProblemeDeploiement(
+        mois=["Janvier", "Fevrier"],
+        besoins={"Janvier": 5, "Fevrier": 8},
+        effectif_initial=5,
+        effectif_final=5,
+        cout_changement=100.0,
+        cout_ecart=200.0,
+        echanges_max_absolu=3,
+    )
+
+    # 2. Tenter de résoudre
+    try:
+        sol = resoudre(test_prob)
+        print(f"Succès ! Coût total : {sol.cout_total}")
+        for ligne in sol.lignes:
+            print(f"Mois: {ligne.mois}, Effectif: {ligne.effectif}")
+    except Exception as e:
+        print(f"Erreur lors de la résolution : {e}")

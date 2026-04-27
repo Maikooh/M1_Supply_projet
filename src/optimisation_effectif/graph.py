@@ -1,5 +1,7 @@
 """Description.
-Ce fichier contient la logique de construction du graphe de déploiement."""
+
+Module implémentant la construction du graphe orienté acyclique (DAG) pour
+le problème de déploiement d'effectifs."""
 
 import networkx as nx
 
@@ -17,9 +19,43 @@ NOEUD_PUITS = "__puits__"
 
 
 class GrapheDeploiement:
-    """Construit le DAG du problème de déploiement."""
+    """Construit le DAG du problème de déploiement d'effectifs.
+
+    Chaque nœud ``(indice_mois, effectif)`` représente un effectif possible
+    pour un mois donné. Un arc relie deux nœuds consécutifs si la variation
+    d'effectif est autorisée. Deux nœuds virtuels ``NOEUD_SOURCE`` et
+    ``NOEUD_PUITS`` encadrent le graphe pour permettre l'algorithme de
+    plus court chemin quel que soit l'effectif initial ou final.
+
+    Avant la construction on vérifie que :
+
+    - les nœuds dont l'écart dépasse ``limite_heures_sup`` sont exclus
+    - les nœuds aux bornes incompatibles avec ``effectif_initial`` ou
+      ``effectif_final`` sont exclus
+    - les arcs dont la variation dépasse ``echanges_max_absolu`` sont exclus
+
+    Exemples :
+
+    >>> from optimisation_effectif.models import ProblemeDeploiement
+    >>> p = ProblemeDeploiement(
+    ...     mois=["Jan", "Fev"], besoins={},
+    ...     effectif_initial=2, effectif_final=2,
+    ...     cout_changement=100, cout_ecart=200,
+    ...     limite_heures_sup=0.25, echanges_max_absolu=1,
+    ... )
+    >>> g = GrapheDeploiement(p)
+    >>> (0, 2) in g.G
+    True
+    >>> (0, 5) in g.G
+    False
+    """
 
     def __init__(self, probleme: ProblemeDeploiement) -> None:
+        """Initialise et construit le graphe complet.
+
+        Args:
+            probleme (ProblemeDeploiement): Le problème de déploiement à modéliser.
+        """
         self.probleme = probleme
         self.G = nx.DiGraph()
         self._ajouter_noeuds()
@@ -56,7 +92,12 @@ class GrapheDeploiement:
                 self._ajouter_arcs_depuis(source)
 
     def _ajouter_arcs_depuis(self, source: tuple[int, int]) -> None:
-        """Ajoute tous les arcs valides depuis un noeud source donné."""
+        """Ajoute tous les arcs valides depuis un noeud source donné.
+
+        Args:
+            source (tuple[int, int]): Nœud de départ encodé comme
+                ``(indice_mois, effectif)``.
+        """
         indice_mois, effectif_actuel = source
 
         for effectif_suivant in range(self.probleme.effectif_max + 1):
