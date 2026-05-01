@@ -52,6 +52,10 @@ uv sync
 
 ## Utilisation
 
+### Web Service
+
+[DASHBOARD INTERACTIF hébergé](https://m1-supply-projet.onrender.com/)
+
 ### Python
 
 ```python
@@ -93,7 +97,6 @@ uv run python -m optimisation_effectif.interfaces solve demonstration.json
 ```bash
 uv run python dashboard.py
 ```
----
 
 ## Structure
 
