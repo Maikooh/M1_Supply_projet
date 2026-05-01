@@ -1,0 +1,130 @@
+import pytest
+from src.optimisation_effectif.costs import (
+    ecart_est_valide, 
+    calculer_cout_ecart, 
+    echange_autorise, 
+    est_effectif_valide)
+from src.optimisation_effectif.models import ProblemeDeploiement
+
+@pytest.fixture
+def probleme_test():
+    """Crée un objet de déploiement type pour les tests."""
+    return ProblemeDeploiement(
+        effectif_initial=10,
+        effectif_final=10,
+        mois=["Janvier", "Février"],
+        besoins={"Janvier": 10, "Février": 20},
+        limite_heures_sup=0.25,
+        cout_changement=160,
+        cout_ecart=200,
+        fraction_echanges_max=0.2,
+        echanges_max_absolu=5,
+    )
+
+
+def test_ecart_est_impossible(probleme_test):
+    """ Vérifie que la fonction renvoie False pour un effectif impossible."""
+    assert ecart_est_valide("Février", 10, probleme_test) is False
+
+def test_calculer_cout_ecart_trop_de_manque_plante(probleme_test):
+    """ Vérifie que le calcul echoue si le manque de personnel dépasse la limite."""
+    with pytest.raises(ValueError, match="dépasse la limite d'heures supplémentaires"):
+        calculer_cout_ecart("Février", 10, probleme_test)
+
+def test_calculer_mois_inconnu_ne_plante_pas(probleme_test):
+    """ Vérifie que si le mois n'existe pas, la fonction ne plante pas. """
+    cout, sur, manq = calculer_cout_ecart("fevrier", 10, probleme_test)
+    assert cout == 0.0
+
+def test_ecart_est_valide_mois_inconnu(probleme_test):
+    """Vérifie le comportement de validation pour un mois inexistant."""
+    assert ecart_est_valide("fevrier", 10, probleme_test) is True
+
+def test_echange_est_impossible(probleme_test):
+    """Vérifie qu'un changement d'effectif trop important est refusé."""
+    assert echange_autorise(10, 15, probleme_test) is False
+
+def test_echange_autorise_succes(probleme_test):
+    """Vérifie qu'un changement d'effectif raisonnable est accepté."""
+    assert echange_autorise(10, 11, probleme_test) is True
+
+def test_est_effectif_valide_initial_incorrect(probleme_test):
+    """Vérifie que l'effectif du premier mois doit correspondre à l'effectif initial."""
+    assert est_effectif_valide(0, 15, probleme_test) is False
+
+def test_est_effectif_valide_final_incorrect(probleme_test):
+    """Vérifie que l'effectif du dernier mois doit correspondre à l'effectif final."""
+    dernier_mois_idx = len(probleme_test.mois) - 1
+    assert est_effectif_valide(dernier_mois_idx, 15, probleme_test) is False
+
+def test_calcul_cout_parfait(probleme_test):
+    """Vérifie que le coût est 0 quand l'effectif correspond exactement au besoin."""
+    cout, sur, manq = calculer_cout_ecart("Janvier", 10, probleme_test)
+    assert cout == pytest.approx(0.0)
+    assert sur == 0
+    assert manq == 0
+
+def test_calcul_cout_surplus(probleme_test):
+    """Vérifie le calcul quand l'effectif est supérieur au besoin."""
+    cout, sur, manq = calculer_cout_ecart("Janvier", 12, probleme_test)
+    assert cout == pytest.approx(400.0)
+    assert sur == 2
+    assert manq == 0
+
+def test_calculer_cout_limite_exacte_heures_sup(probleme_test):
+    """Vérifie le cas où le manque est exactement égal à la limite autorisée."""
+    cout, sur, manq = calculer_cout_ecart("Février", 15, probleme_test)
+    assert cout == pytest.approx(1000.0)
+    assert sur == 0
+    assert manq == 5
+
+def test_est_effectif_valide_si_initial_est_none(probleme_test):
+    """Vérifie que l'effectif est valide au mois 0 si initial est None."""
+    probleme_test.effectif_initial = None
+    assert est_effectif_valide(0, 30, probleme_test) is True
+
+def test_est_effectif_valide_si_final_est_none(probleme_test):
+    """Vérifie que l'effectif est valide au dernier mois si final est None."""
+    probleme_test.effectif_final = None
+    dernier_idx = len(probleme_test.mois) - 1
+    assert est_effectif_valide(dernier_idx, 30, probleme_test) is True
+
+def test_mois_vide(probleme_test):
+    """Vérifie le comportement si la liste des mois est vide."""
+    probleme_test.mois = []
+    assert est_effectif_valide(0, 10, probleme_test) is True 
+
+def test_besoins_manquants(probleme_test):
+    """Vérifie si le dictionnaire des besoins est totalement vide."""
+    probleme_test.besoins = {}
+    assert ecart_est_valide("Janvier", 10, probleme_test) is True
+    cout, _, _ = calculer_cout_ecart("Janvier", 10, probleme_test)
+    assert cout == 0.0
+
+def test_echange_max_absolu_prioritaire(probleme_test):
+    """Vérifie que la limite absolue bride la fraction si elle est plus basse."""
+    probleme_test.fraction_echanges_max = 0.2
+    probleme_test.echanges_max_absolu = 5
+    assert echange_autorise(100, 120, probleme_test) is False
+
+def test_limite_heures_sup_nulle(probleme_test):
+    """Si limite_heures_sup est 0, aucun manque n'est toléré."""
+    probleme_test.limite_heures_sup = 0.0
+    assert ecart_est_valide("Février", 19, probleme_test) is False
+
+def test_valeurs_negatives(probleme_test):
+    """Vérifie le comportement avec des effectifs négatifs."""
+    with pytest.raises(ValueError):
+        calculer_cout_ecart("Janvier", -1, probleme_test)
+
+def test_limites_a_zero(probleme_test):
+    """Vérifie quand les limites d'échanges sont à zéro (blocage total)."""
+    probleme_test.echanges_max_absolu = 0
+    assert echange_autorise(10, 11, probleme_test) is False
+
+def test_echange_autorise_sans_fraction(probleme_test):
+    """Vérifie que si la fraction est None, seule la limite absolue compte."""
+    probleme_test.fraction_echanges_max = None
+    probleme_test.echanges_max_absolu = 5
+    assert echange_autorise(10, 15, probleme_test) is True
+    assert echange_autorise(10, 16, probleme_test) is False
