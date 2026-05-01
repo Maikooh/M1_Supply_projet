@@ -19,6 +19,7 @@ app = dash.Dash(
 
 app.layout = create_layout()
 init_callbacks()
+server = app.server
 
 if __name__ == "__main__":
     threading.Timer(1.5, lambda: webbrowser.open(f"http://127.0.0.1:{PORT}")).start()
