@@ -62,10 +62,23 @@ class GrapheDeploiement:
         self._ajouter_arcs()
         self._ajouter_noeuds_virtuels()
 
+    @property
+    def effectif_max_safe(self) -> int:
+        """Retourne effectif_max en garantissant qu'il n'est pas None.
+
+        Raises:
+            ValueError: Si effectif_max est None.
+        """
+        if self.probleme.effectif_max is None:
+            raise ValueError(
+                "effectif_max ne peut pas être None lors de la construction du graphe."
+            )
+        return self.probleme.effectif_max
+
     def _ajouter_noeuds(self) -> None:
         """Ajoute les noeuds valides au graphe."""
         for indice_mois, nom_mois in enumerate(self.probleme.mois):
-            for effectif in range(self.probleme.effectif_max + 1):
+            for effectif in range(self.effectif_max_safe + 1):
                 if not est_effectif_valide(indice_mois, effectif, self.probleme):
                     continue
                 if not ecart_est_valide(nom_mois, effectif, self.probleme):
@@ -85,7 +98,7 @@ class GrapheDeploiement:
     def _ajouter_arcs(self) -> None:
         """Ajoute les arcs valides entre noeuds consécutifs."""
         for indice_mois in range(len(self.probleme.mois) - 1):
-            for effectif_actuel in range(self.probleme.effectif_max + 1):
+            for effectif_actuel in range(self.effectif_max_safe + 1):
                 source = (indice_mois, effectif_actuel)
                 if source not in self.G:
                     continue
@@ -100,7 +113,7 @@ class GrapheDeploiement:
         """
         indice_mois, effectif_actuel = source
 
-        for effectif_suivant in range(self.probleme.effectif_max + 1):
+        for effectif_suivant in range(self.effectif_max_safe + 1):
             destination = (indice_mois + 1, effectif_suivant)
 
             if destination not in self.G:
@@ -135,7 +148,7 @@ class GrapheDeploiement:
                     echanges=0,
                 )
         else:
-            for effectif in range(self.probleme.effectif_max + 1):
+            for effectif in range(self.effectif_max_safe + 1):
                 noeud = (0, effectif)
                 if noeud in self.G:
                     self.G.add_edge(
@@ -152,7 +165,7 @@ class GrapheDeploiement:
             if noeud in self.G:
                 self.G.add_edge(noeud, NOEUD_PUITS, poids=0, echanges=0)
         else:
-            for effectif in range(self.probleme.effectif_max + 1):
+            for effectif in range(self.effectif_max_safe + 1):
                 noeud = (dernier, effectif)
                 if noeud in self.G:
                     self.G.add_edge(noeud, NOEUD_PUITS, poids=0, echanges=0)

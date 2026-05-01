@@ -188,8 +188,8 @@ def solve(
     ]
 
     c_besoin = "rgba(231, 76, 60, 0.55)" if not is_dark else "rgba(239, 154, 154, 0.75)"
-    c_ecart  = "rgba(231, 76, 60, 0.65)" if not is_dark else "rgba(239, 154, 154, 0.85)"
-    c_cumul  = "#7f1d1d" if not is_dark else "#ff8a8a"
+    c_ecart = "rgba(231, 76, 60, 0.65)" if not is_dark else "rgba(239, 154, 154, 0.85)"
+    c_cumul = "#7f1d1d" if not is_dark else "#ff8a8a"
 
     fig1 = go.Figure()
     fig1.add_trace(
@@ -281,7 +281,7 @@ def solve(
     table = html.Div(
         [
             html.H6("Plan de déploiement détaillé", className="fw-bold mb-2"),
-            dbc.Table.from_dataframe(
+            dbc.Table.from_dataframe(  # type: ignore
                 pd.DataFrame(rows),
                 striped=True,
                 bordered=False,

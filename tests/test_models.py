@@ -45,7 +45,7 @@ def _probleme(**kwargs):
         echanges_max_absolu=3,
     )
     base.update(kwargs)
-    return ProblemeDeploiement(**base)
+    return ProblemeDeploiement(**base)  # type: ignore
 
 
 def test_mois_absent_dans_besoins():
@@ -176,7 +176,7 @@ def test_solution_chemin_tuple_invalide():
     etape = _etape(effectif=4)
     with pytest.raises(ValidationError):
         SolutionDeploiement(
-            chemin=[(0, 1, 2)],
+            chemin=[(0, 1, 2)],  # type: ignore
             cout_total=10.0,
             lignes=[etape],
         )
@@ -188,7 +188,7 @@ def test_solution_lignes_type_invalide():
         SolutionDeploiement(
             chemin=[(0, 1)],
             cout_total=10.0,
-            lignes=["etape_invalide"],
+            lignes=["etape_invalide"],  # type: ignore
         )
 
 

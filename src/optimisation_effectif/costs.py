@@ -44,7 +44,11 @@ def ecart_est_valide(
         return True
 
     manquants = max(besoin - effectif, 0)
-    return manquants <= probleme.limite_heures_sup * besoin
+    limite_heures_sup = probleme.limite_heures_sup
+    if limite_heures_sup is None:
+        raise ValueError("limite_heures_sup ne peut pas être None.")
+
+    return manquants <= limite_heures_sup * besoin
 
 
 def calculer_cout_ecart(
